@@ -9,8 +9,12 @@ A mini transaction dashboard built with Next.js that allows users to manage tran
 - ✅ Filter transactions by type (All, Credit, Debit)
 - ✅ Display summary statistics (Total Inflow, Total Outflow, Net Balance)
 - ✅ Persist data in localStorage
-- ✅ Export transactions to CSV or Excel (XLSX) format
+- ✅ Export transactions to CSV or Excel (XLSX) format (respects current filters)
+- ✅ Toast notifications for transaction additions
+- ✅ Pagination with customizable items per page (5, 10, 20, 50)
 - ✅ Responsive design for desktop and mobile devices
+- ✅ Currency formatting with Naira symbol (₦)
+- ✅ Initial dummy data for demonstration
 
 ## Tech Stack
 
@@ -18,7 +22,9 @@ A mini transaction dashboard built with Next.js that allows users to manage tran
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Export Library**: xlsx (for Excel export)
+- **Toast Notifications**: react-hot-toast
 - **State Management**: React Hooks (useState, useEffect, useMemo)
+- **Architecture**: SOLID principles with service interfaces
 
 ## Getting Started
 
@@ -54,19 +60,28 @@ npm start
 
 ```
 ├── app/
-│   ├── layout.tsx          # Root layout component
+│   ├── layout.tsx          # Root layout with Toaster
 │   ├── page.tsx            # Main dashboard page
 │   └── globals.css         # Global styles with Tailwind
 ├── components/
 │   ├── TransactionForm.tsx # Modal form for adding transactions
 │   ├── TransactionList.tsx # Table component for displaying transactions
 │   ├── FilterButtons.tsx   # Filter buttons component
-│   └── SummaryStats.tsx    # Summary statistics cards
+│   ├── SummaryStats.tsx    # Summary statistics cards
+│   └── Pagination.tsx      # Pagination component
+├── interfaces/
+│   ├── IStorageService.ts   # Storage service interface
+│   └── IExportService.ts   # Export service interface
+├── services/
+│   ├── StorageService.ts   # LocalStorage service implementation
+│   └── ExportService.ts    # Export service implementation
 ├── types/
 │   └── transaction.ts      # TypeScript types for transactions
 ├── utils/
-│   ├── storage.ts          # localStorage utilities
-│   └── export.ts           # CSV and Excel export utilities
+│   ├── currency.ts         # Currency formatter utility (Naira)
+│   ├── dummyData.ts       # Initial dummy transaction data
+│   ├── storage.ts          # Legacy storage utilities (deprecated)
+│   └── export.ts           # Legacy export utilities (deprecated)
 └── package.json
 ```
 
@@ -78,11 +93,11 @@ npm start
 
    - Modal form component for adding new transactions
    - Handles form validation and submission
-   - Reusable and self-contained
 
 2. **TransactionList** (`components/TransactionList.tsx`)
 
    - Displays transactions in a responsive table
+   - Shows all fields: ID, Description, Amount, Type, Date
    - Shows empty state when no transactions exist
    - Color-coded transaction types
 
@@ -90,64 +105,99 @@ npm start
 
    - Filter controls for All, Credit, and Debit
    - Active state styling
-   - Reusable filter component
 
 4. **SummaryStats** (`components/SummaryStats.tsx`)
+
    - Calculates and displays summary statistics
    - Shows Total Inflow, Total Outflow, and Net Balance
    - Color-coded values (green for positive, red for negative)
 
+5. **Pagination** (`components/Pagination.tsx`)
+   - Handles pagination UI and navigation
+   - Page number buttons with ellipsis for large page counts
+   - Items per page selector (5, 10, 20, 50)
+   - Shows "Showing X to Y of Z transactions"
+
+### Services (SOLID Principles)
+
+1. **StorageService** (`services/StorageService.ts`)
+
+   - Implements `IStorageService` interface
+   - Handles localStorage operations for transactions
+
+2. **ExportService** (`services/ExportService.ts`)
+   - Implements `IExportService` interface
+   - Handles CSV and Excel export operations
+
 ### Utilities
 
-1. **Storage Utilities** (`utils/storage.ts`)
+1. **CurrencyFormatter** (`utils/currency.ts`)
 
-   - `getTransactionsFromStorage()`: Retrieves transactions from localStorage
-   - `saveTransactionsToStorage()`: Saves transactions to localStorage
-   - Handles SSR safety checks
+   - Formats currency values with Naira symbol (₦)
+   - Provides consistent currency formatting across the app
 
-2. **Export Utilities** (`utils/export.ts`)
-   - `exportToCSV()`: Exports filtered transactions to CSV format
-   - `exportToXLSX()`: Exports filtered transactions to Excel (XLSX) format
-   - Both functions respect the current filter state
+2. **Dummy Data** (`utils/dummyData.ts`)
+   - Generates initial dummy transaction data
+   - Used when localStorage is empty
 
 ## Design Decisions
+
+### SOLID Principles
+
+- **Single Responsibility Principle (SRP)**: Each component, service, and utility has a single, well-defined responsibility
+- **Dependency Inversion Principle (DIP)**: Services implement interfaces, allowing for easy testing and future extensions
+- **Open/Closed Principle (OCP)**: Services are open for extension (can add new implementations) but closed for modification
 
 ### State Management
 
 - Used React Hooks (useState, useEffect, useMemo) for state management
 - Centralized state in the main page component
-- Used `useMemo` for filtered transactions to optimize performance
+- Used `useMemo` for filtered and paginated transactions to optimize performance
+- Pagination state managed separately (currentPage, itemsPerPage)
 
 ### Data Persistence
 
-- Implemented localStorage for data persistence
+- Implemented localStorage for data persistence via StorageService
 - Data automatically saves on every transaction change
 - Data loads on component mount
+- Initial dummy data loads if storage is empty
 
 ### Component Reusability
 
 - Created small, focused, reusable components
 - Each component has a single responsibility
 - Props are well-typed with TypeScript
+- Components follow consistent patterns
 
 ### Styling
 
 - Used Tailwind CSS for utility-first styling
 - Responsive design with mobile-first approach
 - Consistent color scheme (blue for primary actions, green for credits, red for debits)
+- Currency displayed with Naira symbol (₦)
 
 ### User Experience
 
 - Modal form for adding transactions (non-intrusive)
+- Toast notifications for successful transaction additions
 - Clear visual feedback for transaction types
 - Empty states for better UX
+- Pagination for better performance with large datasets
 - Export functionality respects current filters
+- Smooth scrolling on page changes
 
 ### Type Safety
 
 - Full TypeScript implementation
 - Defined types for all data structures
 - Type-safe props for all components
+- Interface-based service contracts
+
+### ID Generation
+
+- Sequential numeric IDs for transactions
+- IDs are simple numbers (1, 2, 3, etc.)
+- New transactions get the next sequential number based on existing transactions
 
 ## Responsive Design
 
@@ -156,6 +206,7 @@ The dashboard is fully responsive:
 - **Desktop**: Full-width layout with side-by-side statistics
 - **Mobile**: Stacked layout with optimized spacing
 - **Table**: Horizontal scroll on smaller screens
+- **Pagination**: Adapts to screen size with responsive controls
 
 ## Browser Support
 
@@ -163,6 +214,8 @@ The dashboard is fully responsive:
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
+
+## Future Enhancements
 
 This project is part of the Afripay Frontend Engineer Assessment.
 
