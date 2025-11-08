@@ -215,7 +215,5 @@ The dashboard is fully responsive:
 - Safari (latest)
 - Edge (latest)
 
-## Future Enhancements
-
 This project is part of the Afripay Frontend Engineer Assessment.
 
